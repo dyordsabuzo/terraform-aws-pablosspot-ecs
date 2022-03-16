@@ -10,15 +10,23 @@ resource "aws_ecs_service" "service" {
   desired_count   = 2
 
   load_balancer {
-    container_name   = local.container_name
-    container_port   = local.host_port
+    container_name   = local.main_container_name
+    container_port   = local.main_container_port
     target_group_arn = var.target_group_arn
+  }
+
+  dynamic "network_configuration" {
+    for_each = var.network_mode == "awsvpc" ? [1] : []
+    content {
+      subnets         = data.aws_subnets.subnets.ids
+      security_groups = [aws_security_group.secgrp.id]
+    }
   }
 }
 
 resource "aws_ecs_task_definition" "task" {
   family                   = var.task_family
-  network_mode             = "bridge"
+  network_mode             = var.network_mode
   requires_compatibilities = ["EC2"]
   execution_role_arn       = aws_iam_role.task_role.arn
   container_definitions    = var.container_definition
@@ -50,4 +58,36 @@ resource "aws_iam_role" "task_role" {
 resource "aws_cloudwatch_log_group" "log" {
   name              = "/${var.cluster_name}/${var.service_name}"
   retention_in_days = 14
+}
+
+resource "aws_default_vpc" "default" {
+  lifecycle {
+    ignore_changes = ["tags"]
+  }
+}
+
+resource "aws_security_group" "secgrp" {
+  name        = "${var.service_name}-ecs-secgrp"
+  description = "${var.service_name} ecs security group"
+  vpc_id      = var.vpc_id == null ? aws_default_vpc.default.id : var.vpc_id
+
+  ingress {
+    from_port = local.main_container_port
+    to_port   = local.main_container_port
+    protocol  = "tcp"
+    cidr_blocks = [var.vpc_id == null ? aws_default_vpc.default.cidr_block
+      : data.aws_vpc.vpc[0].cidr_block
+    ]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.service_name}-ecs-secgrp"
+  }
 }
