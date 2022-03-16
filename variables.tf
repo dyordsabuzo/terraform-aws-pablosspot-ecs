@@ -28,3 +28,15 @@ variable "container_definition" {
   type        = string
   description = "JSON string of container definition assigned to ecs task"
 }
+
+variable "vpc_id" {
+  type        = string
+  description = "VPC id"
+  default     = null
+}
+
+variable "network_mode" {
+  type        = string
+  description = "ECS network mode"
+  default     = "awsvpc"
+}
