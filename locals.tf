@@ -6,7 +6,7 @@ locals {
 
   enhanced_container_definition = [
     for definition in local.container_definition :
-    merge(definition, lookup(definition, "logConfiguration", null) ? {
+    merge(definition, lookup(definition, "logConfiguration", null) == null ? {
       logConfiguration = {
         logDriver = "awslogs"
 
