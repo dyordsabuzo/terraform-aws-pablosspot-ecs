@@ -6,13 +6,15 @@ locals {
 
   enhanced_container_definition = [
     for definition in local.container_definition :
-    merge(definition, lookup(definition, "logConfiguration", null) == null ? {
-      logDriver = "awslogs"
+    merge(definition, lookup(definition, "logConfiguration", null) ? {
+      logConfiguration = {
+        logDriver = "awslogs"
 
-      options = {
-        awslogs-region        = var.region
-        awslogs-stream-prefix = definition.name
-        awslogs-group         = aws_cloudwatch_log_group.log.name
+        options = {
+          awslogs-region        = var.region
+          awslogs-stream-prefix = definition.name
+          awslogs-group         = aws_cloudwatch_log_group.log.name
+        }
       }
     } : null)
   ]
