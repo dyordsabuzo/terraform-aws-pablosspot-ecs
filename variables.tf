@@ -24,9 +24,17 @@ variable "target_group_arn" {
   description = "Load balancer target group arn"
 }
 
-variable "container_definition" {
-  type        = string
-  description = "JSON string of container definition assigned to ecs task"
+variable "container_definitions" {
+  type = list(object({
+    name           = string
+    image          = string
+    cpu            = number
+    memory         = number
+    environment    = map(string)
+    secrets        = map(string)
+    container_port = number
+  }))
+  description = "List of container definition assigned to ecs task"
 }
 
 variable "vpc_id" {
