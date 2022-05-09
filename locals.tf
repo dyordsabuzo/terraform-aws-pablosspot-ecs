@@ -1,13 +1,30 @@
 locals {
-  container_definition = jsondecode(var.container_definition)
-  first_container      = local.container_definition[0]
-  main_container_name  = local.first_container.name
-  main_container_port  = local.first_container.portMappings[0].containerPort
-
-  enhanced_container_definition = [
-    for definition in local.container_definition :
-    merge(definition, lookup(definition, "logConfiguration", null) == null ? {
-      logConfiguration = {
+  container_definitions = format("[%s]", join(",", [
+    for definition in var.container_definitions :
+    templatefile("${path.module}/templates/container_definition.tpl", {
+      container_name = definition.name,
+      image          = definition.image,
+      cpu            = definition.cpu,
+      memory         = definition.memory,
+      essential      = true,
+      environment = jsonencode([
+        for key, value in definition.environment :
+        {
+          name  = key
+          value = value
+        }
+      ]),
+      secrets = jsonencode([
+        for key, value in definition.secrets :
+        {
+          name      = key
+          valueFrom = value
+        }
+      ]),
+      port_mappings = jsonencode([{
+        containerPort = definition.container_port
+      }]),
+      log_configuration = jsonencode({
         logDriver = "awslogs"
 
         options = {
@@ -15,7 +32,11 @@ locals {
           awslogs-stream-prefix = definition.name
           awslogs-group         = aws_cloudwatch_log_group.log.name
         }
-      }
-    } : null)
-  ]
+      })
+    })
+  ]))
+
+  first_container     = var.container_definitions[0]
+  main_container_name = local.first_container.name
+  main_container_port = local.first_container.portMappings[0].containerPort
 }
