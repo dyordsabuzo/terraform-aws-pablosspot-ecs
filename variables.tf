@@ -48,3 +48,17 @@ variable "network_mode" {
   description = "ECS network mode"
   default     = "awsvpc"
 }
+
+variable "launch_type" {
+  description = "ECS launch type"
+  type = object({
+    type   = string
+    cpu    = number
+    memory = number
+  })
+  default = {
+    type   = "EC2"
+    cpu    = null
+    memory = null
+  }
+}
