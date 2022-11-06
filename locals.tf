@@ -1,6 +1,6 @@
 locals {
   container_definitions = jsonencode([
-    for definition in var.container_definitions : {
+    for definition in var.container_definitions : merge({
       for key, value in definition :
       key => try(
         # handle value that is a list
@@ -10,7 +10,26 @@ locals {
             key == "secrets" ? "valueFrom" : "value" = v
         }]),
       value)
-    }
+      },
+      lookup(definition, "portMappings", null) == null ? {
+        portMappings = [
+          {
+            containerPort = definition.container_port
+            hostPort      = definition.container_port
+          }
+        ]
+      } : {},
+      lookup(definition, "log_configuration", null) == null ? {
+        logDriver = "awslogs"
+
+        options = {
+          awslogs-region        = var.region
+          awslogs-stream-prefix = definition.name
+          awslogs-group         = aws_cloudwatch_log_group.log.name
+        }
+      } : {}
+
+    )
   ])
 
   first_container     = var.container_definitions[0]

@@ -68,7 +68,7 @@ resource "aws_cloudwatch_log_group" "log" {
 
 resource "aws_default_vpc" "default" {
   lifecycle {
-    ignore_changes = ["tags"]
+    ignore_changes = [tags]
   }
 }
 

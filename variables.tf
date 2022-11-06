@@ -25,7 +25,7 @@ variable "target_group_arn" {
 }
 
 variable "container_definitions" {
-  type        = list(map)
+  type        = list(map(string))
   description = "List of container definition assigned to ecs task"
 }
 
