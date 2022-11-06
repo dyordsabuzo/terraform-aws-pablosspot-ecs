@@ -14,12 +14,12 @@ locals {
       lookup(definition, "portMappings", null) == null ? {
         portMappings = [
           {
-            containerPort = definition.container_port
-            hostPort      = definition.container_port
+            containerPort = tonumber(definition.container_port)
+            hostPort      = tonumber(definition.container_port)
           }
         ]
       } : {},
-      lookup(definition, "log_configuration", null) == null ? {
+      try(lookup(definition, "log_configuration", null) == null ? {
         logDriver = "awslogs"
 
         options = {
@@ -27,7 +27,7 @@ locals {
           awslogs-stream-prefix = definition.name
           awslogs-group         = aws_cloudwatch_log_group.log.name
         }
-      } : {}
+      } : {}, {})
 
     )
   ])
