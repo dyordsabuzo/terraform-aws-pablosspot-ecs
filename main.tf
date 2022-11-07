@@ -97,3 +97,18 @@ resource "aws_security_group" "secgrp" {
     Name = "${var.service_name}-ecs-secgrp"
   }
 }
+
+resource "aws_lb_target_group" "target" {
+  name        = format("%s-%s", var.service_name, terraform.workspace)
+  port        = local.main_container_port
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id == null ? aws_default_vpc.default.id : var.vpc_id
+  target_type = "IP"
+
+  health_check {
+    protocol            = "HTTP"
+    interval            = 10
+    unhealthy_threshold = 6
+    matcher             = "200,301-399"
+  }
+}

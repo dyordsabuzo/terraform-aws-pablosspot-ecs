@@ -19,11 +19,6 @@ variable "task_family" {
   description = "ECS task family"
 }
 
-variable "target_group_arn" {
-  type        = string
-  description = "Load balancer target group arn"
-}
-
 variable "container_definitions" {
   type        = list(map(string))
   description = "List of container definition assigned to ecs task"
