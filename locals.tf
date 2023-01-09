@@ -1,6 +1,7 @@
 locals {
+  container_defn_object = jsondecode(var.container_definitions)
   container_definitions = jsonencode([
-    for definition in var.container_definitions : merge({
+    for definition in local.container_defn_object : merge({
       for key, value in definition :
       key => try(
         # handle value that is a list
@@ -32,7 +33,7 @@ locals {
     )
   ])
 
-  first_container     = var.container_definitions[0]
+  first_container     = local.container_defn_object[0]
   main_container_name = local.first_container.name
   main_container_port = local.first_container.container_port
 }

@@ -20,8 +20,8 @@ variable "task_family" {
 }
 
 variable "container_definitions" {
-  type        = list(map(string))
-  description = "List of container definition assigned to ecs task"
+  type        = string
+  description = "JSON encoded list of container definition assigned to ecs task"
 }
 
 variable "vpc_id" {
