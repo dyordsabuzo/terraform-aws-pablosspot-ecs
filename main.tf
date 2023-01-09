@@ -9,10 +9,14 @@ resource "aws_ecs_service" "service" {
   task_definition = aws_ecs_task_definition.task.arn
   desired_count   = 2
 
-  load_balancer {
-    container_name   = local.main_container_name
-    container_port   = local.main_container_port
-    target_group_arn = aws_lb_target_group.target.arn
+  dynamic "load_balancer" {
+    for_each = var.attach_to_lb ? [1] : []
+
+    content {
+      container_name   = local.main_container_name
+      container_port   = local.main_container_port
+      target_group_arn = aws_lb_target_group.target.0.arn
+    }
   }
 
   dynamic "network_configuration" {
@@ -99,6 +103,7 @@ resource "aws_security_group" "secgrp" {
 }
 
 resource "aws_lb_target_group" "target" {
+  count       = var.attach_to_lb ? 1 : 0
   name        = format("%s-%s", var.service_name, terraform.workspace)
   port        = local.main_container_port
   protocol    = "HTTP"

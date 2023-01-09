@@ -7,5 +7,5 @@ output "container_definitions" {
 }
 
 output "target_group_arn" {
-  value = aws_lb_target_group.target.arn
+  value = var.attach_to_lb ? aws_lb_target_group.target.0.arn : null
 }

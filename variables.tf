@@ -49,3 +49,9 @@ variable "launch_type" {
     memory = null
   }
 }
+
+variable "attach_to_lb" {
+  description = "Flag to indicate if ECS is attached to LB"
+  type        = bool
+  default     = true
+}
