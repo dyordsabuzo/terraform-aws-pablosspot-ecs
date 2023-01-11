@@ -21,12 +21,14 @@ locals {
         ]
       } : {},
       try(lookup(definition, "log_configuration", null) == null ? {
-        logDriver = "awslogs"
+        log_configuration = {
+          logDriver = "awslogs"
 
-        options = {
-          awslogs-region        = var.region
-          awslogs-stream-prefix = definition.name
-          awslogs-group         = aws_cloudwatch_log_group.log.name
+          options = {
+            awslogs-region        = var.region
+            awslogs-stream-prefix = definition.name
+            awslogs-group         = aws_cloudwatch_log_group.log.name
+          }
         }
       } : {}, {})
 
