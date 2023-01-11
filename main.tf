@@ -130,6 +130,6 @@ resource "aws_lb_listener_rule" "rule" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target.0.target_group_arn
+    target_group_arn = aws_lb_target_group.target.0.arn
   }
 }
