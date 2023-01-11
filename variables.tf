@@ -55,3 +55,12 @@ variable "attach_to_lb" {
   type        = bool
   default     = true
 }
+
+variable "endpoint_details" {
+  type = object({
+    lb_listener_arn = string
+    domain_url      = string
+  })
+  description = "Endpoint details"
+  default     = null
+}

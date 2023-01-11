@@ -10,7 +10,7 @@ resource "aws_ecs_service" "service" {
   desired_count   = 2
 
   dynamic "load_balancer" {
-    for_each = var.attach_to_lb ? [1] : []
+    for_each = var.endpoint_details != null ? [1] : []
 
     content {
       container_name   = local.main_container_name
@@ -103,7 +103,7 @@ resource "aws_security_group" "secgrp" {
 }
 
 resource "aws_lb_target_group" "target" {
-  count       = var.attach_to_lb ? 1 : 0
+  count       = var.endpoint_details != null ? 1 : 0
   name        = format("%s-%s", var.service_name, terraform.workspace)
   port        = local.main_container_port
   protocol    = "HTTP"
@@ -115,5 +115,21 @@ resource "aws_lb_target_group" "target" {
     interval            = 10
     unhealthy_threshold = 6
     matcher             = "200,301-399"
+  }
+}
+
+resource "aws_lb_listener_rule" "rule" {
+  count        = var.endpoint_details != null ? 1 : 0
+  listener_arn = var.endpoint_details.lb_listener_arn
+
+  condition {
+    host_header {
+      values = [var.endpoint_details.domain_url]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.target.0.target_group_arn
   }
 }
