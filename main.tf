@@ -7,7 +7,7 @@ resource "aws_ecs_service" "service" {
   cluster         = aws_ecs_cluster.cluster.name
   launch_type     = var.launch_type.type
   task_definition = aws_ecs_task_definition.task.arn
-  desired_count   = 2
+  desired_count   = var.desired_count
 
   dynamic "load_balancer" {
     for_each = var.endpoint_details != null ? [1] : []

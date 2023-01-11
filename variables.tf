@@ -64,3 +64,9 @@ variable "endpoint_details" {
   description = "Endpoint details"
   default     = null
 }
+
+variable "desired_count" {
+  type        = number
+  description = "ECS service desired container count"
+  default     = 1
+}
