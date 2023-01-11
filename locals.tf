@@ -28,7 +28,15 @@ locals {
           awslogs-stream-prefix = definition.name
           awslogs-group         = aws_cloudwatch_log_group.log.name
         }
-      } : {}, {})
+        } : {}, {
+        logDriver = "awslogs"
+
+        options = {
+          awslogs-region        = var.region
+          awslogs-stream-prefix = definition.name
+          awslogs-group         = aws_cloudwatch_log_group.log.name
+        }
+      })
 
     )
   ])
