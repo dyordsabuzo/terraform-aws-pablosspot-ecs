@@ -20,8 +20,8 @@ locals {
           }
         ]
       } : {},
-      try(lookup(definition, "log_configuration", null) == null ? {
-        log_configuration = {
+      try(lookup(definition, "logConfiguration", null) == null ? {
+        logConfiguration = {
           logDriver = "awslogs"
 
           options = {
