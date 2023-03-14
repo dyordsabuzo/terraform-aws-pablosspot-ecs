@@ -121,10 +121,77 @@ resource "aws_lb_target_group" "target" {
 resource "aws_lb_listener_rule" "rule" {
   count        = var.endpoint_details != null ? 1 : 0
   listener_arn = var.endpoint_details.lb_listener_arn
+  priority     = 10
 
   condition {
     host_header {
       values = [var.endpoint_details.domain_url]
+    }
+  }
+
+  dynamic "action" {
+    for_each = var.authenticate_oidc_details != null ? [1] : []
+
+    content {
+      type = "authenticate-oidc"
+
+      authenticate_oidc {
+        authorization_endpoint     = format("%s/oauth2/v1/authorize", var.authenticate_oidc_details.oidc_endpoint)
+        token_endpoint             = format("%s/oauth2/v1/token", var.authenticate_oidc_details.oidc_endpoint)
+        user_info_endpoint         = format("%s/oauth2/v1/userinfo", var.authenticate_oidc_details.oidc_endpoint)
+        issuer                     = var.authenticate_oidc_details.oidc_endpoint
+        session_cookie_name        = format("TOKEN-OIDC-%s", var.authenticate_oidc_details.client_id)
+        session_timeout            = 120
+        scope                      = "openid profile"
+        on_unauthenticated_request = "authenticate"
+        client_id                  = var.authenticate_oidc_details.client_id
+        client_secret              = var.authenticate_oidc_details.client_secret
+      }
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.target.0.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "rule_exclusion" {
+  count        = var.lb_authentication_exclusion != null ? 1 : 0
+  listener_arn = var.endpoint_details.lb_listener_arn
+  priority     = 1
+
+  condition {
+    host_header {
+      values = [var.endpoint_details.domain_url]
+    }
+  }
+
+  dynamic "condition" {
+    for_each = length(var.lb_authentication_exclusion.path_pattern) > 0 ? [1] : []
+    content {
+      path_pattern {
+        values = var.lb_authentication_exclusion.path_pattern
+      }
+    }
+  }
+
+  dynamic "condition" {
+    for_each = length(var.lb_authentication_exclusion.request_method) > 0 ? [1] : []
+    content {
+      http_request_method {
+        values = var.lb_authentication_exclusion.request_method
+      }
+    }
+  }
+
+  dynamic "condition" {
+    for_each = var.lb_authentication_exclusion.header_names
+    content {
+      http_header {
+        http_header_name = condition.key
+        values           = ["*"]
+      }
     }
   }
 

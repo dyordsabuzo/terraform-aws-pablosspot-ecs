@@ -70,3 +70,23 @@ variable "desired_count" {
   description = "ECS service desired container count"
   default     = 1
 }
+
+variable "authenticate_oidc_details" {
+  type = object({
+    client_id     = string
+    client_secret = string
+    oidc_endpoint = string
+  })
+  description = "OIDC Authentication details"
+  default     = null
+}
+
+variable "lb_authentication_exclusion" {
+  type = object({
+    path_pattern   = list(string)
+    request_method = list(string)
+    header_names   = list(string)
+  })
+  description = "Load balancer rule elements to be excluded from OIDC authentication"
+  default     = null
+}
