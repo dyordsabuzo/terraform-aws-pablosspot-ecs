@@ -189,7 +189,7 @@ resource "aws_lb_listener_rule" "rule_exclusion" {
     for_each = var.lb_authentication_exclusion.header_names
     content {
       http_header {
-        http_header_name = condition.key
+        http_header_name = condition.value
         values           = ["*"]
       }
     }
