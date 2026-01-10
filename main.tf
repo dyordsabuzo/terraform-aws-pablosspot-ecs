@@ -1,3 +1,28 @@
+# firewall resources
+resource "aws_security_group" "secgrp" {
+  name        = "${var.service_name}-ecs-secgrp"
+  description = "${var.service_name} ecs security group"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = local.main_container_port
+    to_port     = local.main_container_port
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.service_name}-ecs-secgrp"
+  }
+}
+
 resource "aws_ecs_cluster" "cluster" {
   name = var.cluster_name
 }
@@ -9,14 +34,10 @@ resource "aws_ecs_service" "service" {
   task_definition = aws_ecs_task_definition.task.arn
   desired_count   = var.desired_count
 
-  dynamic "load_balancer" {
-    for_each = var.endpoint_details != null ? [1] : []
-
-    content {
-      container_name   = local.main_container_name
-      container_port   = local.main_container_port
-      target_group_arn = aws_lb_target_group.target.0.arn
-    }
+  load_balancer {
+    container_name   = local.main_container_name
+    container_port   = local.main_container_port
+    target_group_arn = aws_lb_target_group.target[0].arn
   }
 
   dynamic "network_configuration" {
@@ -42,27 +63,29 @@ resource "aws_ecs_task_definition" "task" {
 resource "aws_iam_role" "task_role" {
   name               = "ecs-task-${var.task_family}-${terraform.workspace}"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_policy.json
+}
 
-  inline_policy {
-    name = "ecs-task-permissions"
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action = [
-            "ecr:*",
-            "logs:*",
-            "ssm:*",
-            "kms:Decrypt",
-            "secretsmanager:GetSecretValue"
+resource "aws_iam_role_policy" "task_policy" {
+  name = "ecs-task-permissions-${var.task_family}-${terraform.workspace}"
+  role = aws_iam_role.task_role.id
 
-          ]
-          Effect   = "Allow"
-          Resource = "*"
-        }
-      ]
-    })
-  }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ecr:*",
+          "logs:*",
+          "ssm:*",
+          "kms:Decrypt",
+          "secretsmanager:GetSecretValue"
+
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_cloudwatch_log_group" "log" {
@@ -70,56 +93,22 @@ resource "aws_cloudwatch_log_group" "log" {
   retention_in_days = 14
 }
 
-resource "aws_default_vpc" "default" {
-  lifecycle {
-    ignore_changes = [tags]
-  }
-}
-
-resource "aws_security_group" "secgrp" {
-  name        = "${var.service_name}-ecs-secgrp"
-  description = "${var.service_name} ecs security group"
-  vpc_id      = var.vpc_id == null ? aws_default_vpc.default.id : var.vpc_id
-
-  ingress {
-    from_port = local.main_container_port
-    to_port   = local.main_container_port
-    protocol  = "tcp"
-    cidr_blocks = [var.vpc_id == null ? aws_default_vpc.default.cidr_block
-      : data.aws_vpc.vpc[0].cidr_block
-    ]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.service_name}-ecs-secgrp"
-  }
-}
-
 resource "aws_lb_target_group" "target" {
-  count       = var.endpoint_details != null ? 1 : 0
-  name        = format("%s-%s", var.service_name, terraform.workspace)
+  name        = "${var.service_name}-${terraform.workspace}-tg"
+  vpc_id      = var.vpc_id
   port        = local.main_container_port
   protocol    = "HTTP"
-  vpc_id      = var.vpc_id == null ? aws_default_vpc.default.id : var.vpc_id
   target_type = "ip"
 
   health_check {
     protocol            = "HTTP"
     interval            = 10
     unhealthy_threshold = 6
-    matcher             = "200,301-399"
+    matcher             = "200-299,301-399"
   }
 }
 
 resource "aws_lb_listener_rule" "rule" {
-  count        = var.endpoint_details != null ? 1 : 0
   listener_arn = var.endpoint_details.lb_listener_arn
   priority     = 10
 
@@ -130,7 +119,7 @@ resource "aws_lb_listener_rule" "rule" {
   }
 
   dynamic "action" {
-    for_each = var.authenticate_oidc_details != null ? [1] : []
+    for_each = var.endpoint_details.authenticate ? [1] : []
 
     content {
       type = "authenticate-oidc"
@@ -152,7 +141,7 @@ resource "aws_lb_listener_rule" "rule" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target.0.arn
+    target_group_arn = aws_lb_target_group.target.arn
   }
 }
 
@@ -197,6 +186,6 @@ resource "aws_lb_listener_rule" "rule_exclusion" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.target.0.arn
+    target_group_arn = aws_lb_target_group.target.arn
   }
 }

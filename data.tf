@@ -11,11 +11,14 @@ data "aws_iam_policy_document" "ecs_task_assume_policy" {
 data "aws_subnets" "subnets" {
   filter {
     name   = "vpc-id"
-    values = [var.vpc_id == null ? aws_default_vpc.default.id : var.vpc_id]
+    values = [var.vpc_id]
+  }
+
+  tags = {
+    role = "private"
   }
 }
 
 data "aws_vpc" "vpc" {
-  count = var.vpc_id == null ? 0 : 1
-  id    = var.vpc_id
+  id = var.vpc_id
 }

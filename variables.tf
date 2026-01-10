@@ -27,7 +27,6 @@ variable "container_definitions" {
 variable "vpc_id" {
   type        = string
   description = "VPC id"
-  default     = null
 }
 
 variable "network_mode" {
@@ -50,19 +49,13 @@ variable "launch_type" {
   }
 }
 
-variable "attach_to_lb" {
-  description = "Flag to indicate if ECS is attached to LB"
-  type        = bool
-  default     = true
-}
-
 variable "endpoint_details" {
   type = object({
     lb_listener_arn = string
     domain_url      = string
+    authenticate    = bool
   })
   description = "Endpoint details"
-  default     = null
 }
 
 variable "desired_count" {
