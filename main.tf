@@ -10,7 +10,7 @@ resource "aws_security_group" "secgrp" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
-  security_group_id = aws_security_group.allow_tls.id
+  security_group_id = aws_security_group.secgrp.id
   cidr_ipv4         = data.aws_vpc.vpc.cidr_block
   from_port         = local.main_container_port
   to_port           = local.main_container_port
@@ -18,7 +18,7 @@ resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
-  security_group_id = aws_security_group.allow_tls.id
+  security_group_id = aws_security_group.secgrp.id
   cidr_ipv6         = data.aws_vpc.vpc.cidr_block
   from_port         = local.main_container_port
   to_port           = local.main_container_port
@@ -27,20 +27,28 @@ resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
 
 resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv4" {
   for_each          = toset(var.egress_cidr_ipv4_list)
-  security_group_id = aws_security_group.allow_tls.id
+  security_group_id = aws_security_group.secgrp.id
   cidr_ipv4         = each.value
   ip_protocol       = "-1"
 }
 
 resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
   for_each          = toset(var.egress_cidr_ipv6_list)
-  security_group_id = aws_security_group.allow_tls.id
+  security_group_id = aws_security_group.secgrp.id
   cidr_ipv6         = each.value
   ip_protocol       = "-1"
 }
 
 resource "aws_ecs_cluster" "cluster" {
   name = var.cluster_name
+
+  dynamic "setting" {
+    for_each = var.enable_container_insights ? [1] : []
+    content {
+      name  = "containerInsights"
+      value = "enabled"
+    }
+  }
 }
 
 resource "aws_ecs_service" "service" {
@@ -97,31 +105,19 @@ resource "aws_iam_role" "task_role" {
 }
 
 resource "aws_iam_role_policy" "task_policy" {
-  name = "ecs-task-permissions-${var.task_family}-${terraform.workspace}"
-  role = aws_iam_role.task_role.id
+  name   = "ecs-task-permissions-${var.task_family}-${terraform.workspace}"
+  role   = aws_iam_role.task_role.id
+  policy = data.aws_iam_policy_document.task_execution_permissions.json
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ecr:*",
-          "logs:*",
-          "ssm:*",
-          "kms:Decrypt",
-          "secretsmanager:GetSecretValue"
-
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
+resource "aws_iam_role_policy_attachment" "task_execution_policy" {
+  role       = aws_iam_role.task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_cloudwatch_log_group" "log" {
   name              = "/${var.cluster_name}/${var.service_name}"
-  retention_in_days = 14
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_lb_target_group" "target" {

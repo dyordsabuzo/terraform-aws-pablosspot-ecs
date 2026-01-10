@@ -9,6 +9,12 @@ variable "cluster_name" {
   description = "ECS cluster name"
 }
 
+variable "enable_container_insights" {
+  description = "Flag to indicate if container insights is enabled or not"
+  type        = bool
+  default     = false
+}
+
 variable "service_name" {
   type        = string
   description = "ECS service name"
@@ -112,4 +118,10 @@ variable "egress_cidr_ipv6_list" {
   description = "List of IPV6 CIDR blocks where egress is allowed"
   type        = list(string)
   default     = []
+}
+
+variable "log_retention_days" {
+  description = "Cloudwatch log retention in days"
+  type        = number
+  default     = 10
 }
