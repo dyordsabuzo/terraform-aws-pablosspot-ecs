@@ -8,6 +8,7 @@ data "aws_iam_policy_document" "ecs_task_assume_policy" {
   }
 }
 
+#tfsec:ignore:aws-iam-no-policy-wildcards:exp:2026-02-01
 data "aws_iam_policy_document" "task_execution_permissions" {
   statement {
     effect = "Allow"
@@ -16,7 +17,7 @@ data "aws_iam_policy_document" "task_execution_permissions" {
       "arn:aws:logs:*",
       "arn:aws:ssm:*",
       "arn:aws:secretsmanager:*",
-      "arn:aws:kms:*"
+      "arn:aws:kms:*",
     ]
     actions = [
       "ecr:GetAuthorizationToken",

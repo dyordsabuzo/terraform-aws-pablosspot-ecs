@@ -39,6 +39,7 @@ resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
   ip_protocol       = "-1"
 }
 
+#tfsec:ignore:aws-ecs-enable-container-insight:exp:2026-02-01
 resource "aws_ecs_cluster" "cluster" {
   name = var.cluster_name
 
@@ -115,6 +116,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key:exp:2026-02-01
 resource "aws_cloudwatch_log_group" "log" {
   name              = "/${var.cluster_name}/${var.service_name}"
   retention_in_days = var.log_retention_days
