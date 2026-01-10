@@ -4,15 +4,13 @@ variable "region" {
   default     = "ap-southeast-2"
 }
 
-variable "cluster_name" {
-  type        = string
-  description = "ECS cluster name"
-}
-
-variable "enable_container_insights" {
-  description = "Flag to indicate if container insights is enabled or not"
-  type        = bool
-  default     = false
+variable "cluster" {
+  type        = object({
+    name = string
+    create = optional(bool)
+    enable_container_insights = optional(bool)
+  })
+  description = "ECS cluster properties"
 }
 
 variable "service_name" {

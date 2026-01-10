@@ -41,10 +41,11 @@ resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
 
 #tfsec:ignore:aws-ecs-enable-container-insight:exp:2026-02-01
 resource "aws_ecs_cluster" "cluster" {
-  name = var.cluster_name
+  count = try(var.cluster.create, true) ? 1 : 0
+  name = var.cluster.name
 
   dynamic "setting" {
-    for_each = var.enable_container_insights ? [1] : []
+    for_each = try(var.cluster.enable_container_insights, false) ? [1] : []
     content {
       name  = "containerInsights"
       value = "enabled"
@@ -54,7 +55,7 @@ resource "aws_ecs_cluster" "cluster" {
 
 resource "aws_ecs_service" "service" {
   name                 = var.service_name
-  cluster              = aws_ecs_cluster.cluster.name
+  cluster              = var.cluster.name
   launch_type          = var.launch_type.type
   task_definition      = aws_ecs_task_definition.task.arn
   desired_count        = var.desired_count
