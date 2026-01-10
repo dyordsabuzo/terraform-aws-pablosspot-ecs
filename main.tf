@@ -53,11 +53,12 @@ resource "aws_ecs_cluster" "cluster" {
 }
 
 resource "aws_ecs_service" "service" {
-  name            = var.service_name
-  cluster         = aws_ecs_cluster.cluster.name
-  launch_type     = var.launch_type.type
-  task_definition = aws_ecs_task_definition.task.arn
-  desired_count   = var.desired_count
+  name                 = var.service_name
+  cluster              = aws_ecs_cluster.cluster.name
+  launch_type          = var.launch_type.type
+  task_definition      = aws_ecs_task_definition.task.arn
+  desired_count        = var.desired_count
+  force_new_deployment = true
 
   load_balancer {
     container_name   = local.main_container_name
