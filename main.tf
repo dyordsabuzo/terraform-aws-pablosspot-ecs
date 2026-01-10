@@ -128,7 +128,7 @@ resource "aws_lb_target_group" "target" {
   target_type = "ip"
 
   dynamic "health_check" {
-    for_each = [var.container_healthcheck]
+    for_each = { var.container_healthcheck.path = var.container_healthcheck }
     content {
       path                = each.value.path
       protocol            = each.value.protocol
