@@ -29,6 +29,10 @@ No modules.
 | [aws_lb_listener_rule.rule_exclusion](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule) | resource |
 | [aws_lb_target_group.target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
 | [aws_security_group.secgrp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.all_traffic_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.all_traffic_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.tls_ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.tls_ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_iam_policy_document.ecs_task_assume_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_subnets.subnets](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnets) | data source |
 | [aws_vpc.vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
@@ -43,6 +47,8 @@ No modules.
 | <a name="input_deployment_circuit_breaker"></a> [deployment\_circuit\_breaker](#input\_deployment\_circuit\_breaker) | Deployment circuit breaker | <pre>object({<br/>    enabled  = bool<br/>    rollback = bool<br/>  })</pre> | `null` | no |
 | <a name="input_deployment_metrics"></a> [deployment\_metrics](#input\_deployment\_metrics) | Minimum and maximum healthy percent during deployment | <pre>object({<br/>    min_percent = optional(number)<br/>    max_percent = optional(number)<br/>  })</pre> | `null` | no |
 | <a name="input_desired_count"></a> [desired\_count](#input\_desired\_count) | ECS service desired container count | `number` | `3` | no |
+| <a name="input_egress_cidr_ipv4_list"></a> [egress\_cidr\_ipv4\_list](#input\_egress\_cidr\_ipv4\_list) | List of IPV4 CIDR blocks where egress is allowed | `list(string)` | `[]` | no |
+| <a name="input_egress_cidr_ipv6_list"></a> [egress\_cidr\_ipv6\_list](#input\_egress\_cidr\_ipv6\_list) | List of IPV6 CIDR blocks where egress is allowed | `list(string)` | `[]` | no |
 | <a name="input_endpoint_details"></a> [endpoint\_details](#input\_endpoint\_details) | Endpoint details | <pre>object({<br/>    lb_listener_arn = string<br/>    domain_url      = string<br/>    authenticate    = bool<br/>  })</pre> | n/a | yes |
 | <a name="input_launch_type"></a> [launch\_type](#input\_launch\_type) | ECS launch type | <pre>object({<br/>    type   = string<br/>    cpu    = number<br/>    memory = number<br/>  })</pre> | <pre>{<br/>  "cpu": null,<br/>  "memory": null,<br/>  "type": "EC2"<br/>}</pre> | no |
 | <a name="input_lb_authentication_exclusion"></a> [lb\_authentication\_exclusion](#input\_lb\_authentication\_exclusion) | Load balancer rule elements to be excluded from OIDC authentication | <pre>object({<br/>    path_pattern   = list(string)<br/>    request_method = list(string)<br/>    header_names   = list(string)<br/>  })</pre> | `null` | no |
