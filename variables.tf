@@ -30,6 +30,26 @@ variable "container_definitions" {
   description = "JSON encoded list of container definition assigned to ecs task"
 }
 
+variable "container_healthcheck" {
+  description = "Health check settings"
+  type = object({
+    path                = string
+    protocol            = string
+    interval            = number
+    healthy_threshold   = number
+    unhealthy_threshold = number
+    matcher             = string
+  })
+  default = {
+    path                = "/"
+    protocol            = "HTTP"
+    interval            = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 5
+    matcher             = "200-299,301-399"
+  }
+}
+
 variable "vpc_id" {
   type        = string
   description = "VPC id"

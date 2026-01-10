@@ -127,11 +127,16 @@ resource "aws_lb_target_group" "target" {
   protocol    = "HTTP"
   target_type = "ip"
 
-  health_check {
-    protocol            = "HTTP"
-    interval            = 10
-    unhealthy_threshold = 6
-    matcher             = "200-299,301-399"
+  dynamic "health_check" {
+    for_each = [var.container_healthcheck]
+    content {
+      path                = each.value.path
+      protocol            = each.value.protocol
+      interval            = each.value.interval
+      healthy_threshold   = each.value.healthy_threshold
+      unhealthy_threshold = each.value.unhealthy_threshold
+      matcher             = each.value.matcher
+    }
   }
 }
 
