@@ -48,6 +48,21 @@ resource "aws_ecs_service" "service" {
       assign_public_ip = true
     }
   }
+
+  dynamic "deployment_circuit_breaker" {
+    for_each = var.deployment_circuit_breaker == null ? [] : [1]
+    content {
+      enable   = var.deployment_circuit_breaker.enabled
+      rollback = var.deployment_circuit_breaker.rollback
+    }
+  }
+
+  deployment_minimum_healthy_percent = try(var.deployment_metrics.min_percent, 100)
+  deployment_maximum_percent         = try(var.deployment_metrics.max_percent, 200)
+
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
 }
 
 resource "aws_ecs_task_definition" "task" {

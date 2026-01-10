@@ -61,7 +61,7 @@ variable "endpoint_details" {
 variable "desired_count" {
   type        = number
   description = "ECS service desired container count"
-  default     = 1
+  default     = 3
 }
 
 variable "authenticate_oidc_details" {
@@ -82,4 +82,22 @@ variable "lb_authentication_exclusion" {
   })
   description = "Load balancer rule elements to be excluded from OIDC authentication"
   default     = null
+}
+
+variable "deployment_circuit_breaker" {
+  description = "Deployment circuit breaker"
+  type = object({
+    enabled  = bool
+    rollback = bool
+  })
+  default = null
+}
+
+variable "deployment_metrics" {
+  description = "Minimum and maximum healthy percent during deployment"
+  type = object({
+    min_percent = optional(number)
+    max_percent = optional(number)
+  })
+  default = null
 }
