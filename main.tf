@@ -42,7 +42,7 @@ resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
 #tfsec:ignore:aws-ecs-enable-container-insight:exp:2026-02-01
 resource "aws_ecs_cluster" "cluster" {
   count = try(var.cluster.create, true) ? 1 : 0
-  name = var.cluster.name
+  name  = var.cluster.name
 
   dynamic "setting" {
     for_each = try(var.cluster.enable_container_insights, false) ? [1] : []
@@ -121,7 +121,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_policy" {
 
 #tfsec:ignore:aws-cloudwatch-log-group-customer-key:exp:2026-02-01
 resource "aws_cloudwatch_log_group" "log" {
-  name              = "/${var.cluster_name}/${var.service_name}"
+  name              = "/${var.cluster.name}/${var.service_name}"
   retention_in_days = var.log_retention_days
 }
 
