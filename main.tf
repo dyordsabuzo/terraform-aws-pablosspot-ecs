@@ -95,6 +95,7 @@ resource "aws_ecs_task_definition" "task" {
   network_mode             = var.network_mode
   requires_compatibilities = [var.launch_type.type]
   execution_role_arn       = aws_iam_role.task_role.arn
+  task_role_arn            = aws_iam_role.task_role.arn
   container_definitions    = local.container_definitions
   cpu                      = var.launch_type.cpu
   memory                   = var.launch_type.memory
