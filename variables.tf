@@ -101,3 +101,15 @@ variable "deployment_metrics" {
   })
   default = null
 }
+
+variable "egress_cidr_ipv4_list" {
+  description = "List of IPV4 CIDR blocks where egress is allowed"
+  type        = list(string)
+  default     = []
+}
+
+variable "egress_cidr_ipv6_list" {
+  description = "List of IPV6 CIDR blocks where egress is allowed"
+  type        = list(string)
+  default     = []
+}
