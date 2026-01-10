@@ -130,12 +130,12 @@ resource "aws_lb_target_group" "target" {
   dynamic "health_check" {
     for_each = { (var.container_healthcheck.path) = var.container_healthcheck }
     content {
-      path                = each.value.path
-      protocol            = each.value.protocol
-      interval            = each.value.interval
-      healthy_threshold   = each.value.healthy_threshold
-      unhealthy_threshold = each.value.unhealthy_threshold
-      matcher             = each.value.matcher
+      path                = health_check.value.path
+      protocol            = health_check.value.protocol
+      interval            = health_check.value.interval
+      healthy_threshold   = health_check.value.healthy_threshold
+      unhealthy_threshold = health_check.value.unhealthy_threshold
+      matcher             = health_check.value.matcher
     }
   }
 }

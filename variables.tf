@@ -44,7 +44,7 @@ variable "container_healthcheck" {
     path                = "/"
     protocol            = "HTTP"
     interval            = 5
-    healthy_threshold   = 3
+    healthy_threshold   = 2
     unhealthy_threshold = 5
     matcher             = "200-299,301-399"
   }
@@ -143,5 +143,5 @@ variable "egress_cidr_ipv6_list" {
 variable "log_retention_days" {
   description = "Cloudwatch log retention in days"
   type        = number
-  default     = 10
+  default     = 7
 }
