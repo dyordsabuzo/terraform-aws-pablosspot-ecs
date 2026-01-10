@@ -37,7 +37,7 @@ resource "aws_ecs_service" "service" {
   load_balancer {
     container_name   = local.main_container_name
     container_port   = local.main_container_port
-    target_group_arn = aws_lb_target_group.target[0].arn
+    target_group_arn = aws_lb_target_group.target.arn
   }
 
   dynamic "network_configuration" {
