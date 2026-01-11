@@ -12,22 +12,22 @@ resource "aws_security_group" "secgrp" {
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
   description       = "Allow incoming TLS traffic from the VPC IPV4 CIDR block"
   security_group_id = aws_security_group.secgrp.id
-  cidr_ipv4         = data.aws_vpc.vpc.cidr_ipv4
+  cidr_ipv4         = data.aws_vpc.vpc.cidr_block
   from_port         = local.main_container_port
   to_port           = local.main_container_port
   ip_protocol       = "tcp"
   tags              = local.tags
 }
 
-resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
-  description       = "Allow incoming TLS traffic from the VPC IPV6 CIDR block"
-  security_group_id = aws_security_group.secgrp.id
-  cidr_ipv6         = data.aws_vpc.vpc.cidr_ipv6
-  from_port         = local.main_container_port
-  to_port           = local.main_container_port
-  ip_protocol       = "tcp"
-  tags              = local.tags
-}
+# resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
+#   description       = "Allow incoming TLS traffic from the VPC IPV6 CIDR block"
+#   security_group_id = aws_security_group.secgrp.id
+#   cidr_ipv6         = data.aws_vpc.vpc.cidr_ipv6
+#   from_port         = local.main_container_port
+#   to_port           = local.main_container_port
+#   ip_protocol       = "tcp"
+#   tags              = local.tags
+# }
 
 resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv4" {
   for_each          = toset(var.egress_cidr_ipv4_list)
