@@ -65,3 +65,16 @@ data "aws_subnets" "subnets" {
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
+
+data "aws_iam_policy_document" "ecs_auto_scale_role" {
+  version = "2012-10-17"
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["application-autoscaling.amazonaws.com"]
+    }
+  }
+}

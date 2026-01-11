@@ -5,9 +5,9 @@ variable "region" {
 }
 
 variable "cluster" {
-  type        = object({
-    name = string
-    create = optional(bool)
+  type = object({
+    name                      = string
+    create                    = optional(bool)
     enable_container_insights = optional(bool)
   })
   description = "ECS cluster properties"
@@ -88,6 +88,24 @@ variable "desired_count" {
   default     = 3
 }
 
+variable "egress_cidr_ipv4_list" {
+  description = "List of IPV4 CIDR blocks where egress is allowed"
+  type        = list(string)
+  default     = []
+}
+
+variable "egress_cidr_ipv6_list" {
+  description = "List of IPV6 CIDR blocks where egress is allowed"
+  type        = list(string)
+  default     = []
+}
+
+variable "log_retention_days" {
+  description = "Cloudwatch log retention in days"
+  type        = number
+  default     = 7
+}
+
 variable "authenticate_oidc_details" {
   type = object({
     client_id     = string
@@ -126,20 +144,85 @@ variable "deployment_metrics" {
   default = null
 }
 
-variable "egress_cidr_ipv4_list" {
-  description = "List of IPV4 CIDR blocks where egress is allowed"
-  type        = list(string)
-  default     = []
+variable "container_capacity" {
+  description = "Auto scaling container capacity properties"
+  type = object({
+    min = number
+    max = number
+  })
+  default = {
+    min = 1
+    max = 4
+  }
 }
 
-variable "egress_cidr_ipv6_list" {
-  description = "List of IPV6 CIDR blocks where egress is allowed"
-  type        = list(string)
-  default     = []
+variable "scaling_adjustment" {
+  description = "Auto scaling adjustment parameters"
+  type = object({
+    scale_up = object({
+      adjustment_type         = string
+      scaling_adjustment      = number
+      metric_aggregation_type = string
+    })
+    scale_down = object({
+      adjustment_type         = string
+      scaling_adjustment      = number
+      metric_aggregation_type = string
+    })
+  })
+  default = {
+    scale_up = {
+      adjustment_type         = "ChangeInCapacity"
+      scaling_adjustment      = 1
+      metric_aggregation_type = "Maximum"
+    }
+    scale_down = {
+      adjustment_type         = "ChangeInCapacity"
+      scaling_adjustment      = -1
+      metric_aggregation_type = "Maximum"
+    }
+  }
 }
 
-variable "log_retention_days" {
-  description = "Cloudwatch log retention in days"
-  type        = number
-  default     = 7
+variable "autoscaling_metric_alarms" {
+  description = "Cloudwatch metric alarms associated with autoscaling"
+  type = list(object({
+    identifer           = optional(string)
+    threshold           = optional(number)
+    comparison_operator = optional(string)
+    evaluation_periods  = optional(number)
+    period              = optional(number)
+    metric_name         = optional(string)
+    statistic           = optional(string)
+    unit                = optional(string)
+    metric_is_high      = bool
+  }))
+  default = [{
+    identifer      = "cpu-high"
+    metric_name    = "CPUUtilization"
+    statistic      = "Average"
+    threshold      = 70
+    metric_is_high = true
+    },
+    {
+      identifer      = "cpu-low"
+      metric_name    = "CPUUtilization"
+      statistic      = "Average"
+      threshold      = 30
+      metric_is_high = false
+    },
+    {
+      identifer      = "memory-high"
+      metric_name    = "MemoryUtilization"
+      statistic      = "Average"
+      threshold      = 70
+      metric_is_high = true
+    },
+    {
+      identifer      = "memory-low"
+      metric_name    = "MemoryUtilization"
+      statistic      = "Average"
+      threshold      = 30
+      metric_is_high = false
+  }]
 }

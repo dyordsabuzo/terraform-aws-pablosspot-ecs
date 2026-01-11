@@ -82,10 +82,6 @@ resource "aws_ecs_service" "service" {
     }
   }
 
-  deployment_configuration {
-    strategy = "BLUE_GREEN"
-  }
-
   dynamic "deployment_circuit_breaker" {
     for_each = var.deployment_circuit_breaker == null ? [] : [1]
     content {
@@ -99,9 +95,10 @@ resource "aws_ecs_service" "service" {
 
   depends_on = [aws_iam_role_policy.task_policy]
 
-  # lifecycle {
-  #   ignore_changes = [desired_count]
-  # }
+  # This is added to ignore changes to the desired count from a manual update
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
 
   tags = local.tags
 }
@@ -248,4 +245,77 @@ resource "aws_lb_listener_rule" "rule_exclusion" {
   }
 
   tags = local.tags
+}
+
+# auto scaling
+# ECS auto scale role
+resource "aws_iam_role" "ecs_auto_scale_role" {
+  name               = "${aws_ecs_service.service.name}-auto-scale"
+  assume_role_policy = data.aws_iam_policy_document.ecs_auto_scale_role.json
+}
+
+resource "aws_appautoscaling_target" "target" {
+  service_namespace  = "ecs"
+  resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  role_arn           = aws_iam_role.ecs_auto_scale_role.arn
+  min_capacity       = var.container_capacity.min
+  max_capacity       = var.container_capacity.max
+}
+
+# Automatically scale capacity up by one
+resource "aws_appautoscaling_policy" "up" {
+  name               = "${aws_ecs_service.service.name}-scale-up"
+  service_namespace  = "ecs"
+  resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+
+  step_scaling_policy_configuration {
+    adjustment_type         = var.scaling_adjustment.scale_up.adjustment_type
+    cooldown                = 60
+    metric_aggregation_type = var.scaling_adjustment.scale_up.metric_aggregation_type
+    step_adjustment {
+      scaling_adjustment          = var.scaling_adjustment.scale_up.scaling_adjustment
+      metric_interval_lower_bound = 0
+    }
+  }
+  depends_on = [aws_appautoscaling_target.target]
+}
+
+# Automatically scale capacity down by one
+resource "aws_appautoscaling_policy" "down" {
+  name               = "${aws_ecs_service.service.name}-scale-down"
+  service_namespace  = "ecs"
+  resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+
+  step_scaling_policy_configuration {
+    adjustment_type         = var.scaling_adjustment.scale_down.adjustment_type
+    cooldown                = 60
+    metric_aggregation_type = var.scaling_adjustment.scale_down.metric_aggregation_type
+    step_adjustment {
+      scaling_adjustment          = var.scaling_adjustment.scale_down.scaling_adjustment
+      metric_interval_lower_bound = 0
+    }
+  }
+  depends_on = [aws_appautoscaling_target.target]
+}
+
+# CloudWatch alarm that triggers scale up policy
+resource "aws_cloudwatch_metric_alarm" "alarm" {
+  for_each            = { for alarm in var.autoscaling_metric_alarms : alarm.name => alarm }
+  alarm_name          = "${aws_ecs_service.service.name}-${each.value.identifier}"
+  namespace           = "AWS/ECS"
+  comparison_operator = coalesce(each.value.comparison_operator, "GreaterThanOrEqualToThreshold")
+  evaluation_periods  = coalesce(each.value.evaluation_periods, 2)
+  metric_name         = each.value.metric_name
+  period              = coalesce(each.value.period, 60)
+  statistic           = coalesce(each.value.statistic, "Average")
+  threshold           = coalesce(each.value.threshold, 70)
+  alarm_actions       = [each.value.metric_is_high ? aws_appautoscaling_policy.up.arn : aws_appautoscaling_policy.down.arn]
+
+  dimensions = {
+    ClusterName = var.cluster.name
+    ServiceName = aws_ecs_service.service.name
+  }
 }
