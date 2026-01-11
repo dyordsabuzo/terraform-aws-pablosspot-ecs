@@ -176,7 +176,7 @@ resource "aws_lb_target_group" "target" {
 
 resource "aws_lb_listener_rule" "rule" {
   listener_arn = var.endpoint_details.lb_listener_arn
-  priority     = 10
+  priority     = var.endpoint_details.priority
 
   condition {
     host_header {

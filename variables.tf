@@ -91,6 +91,7 @@ variable "endpoint_details" {
   type = object({
     lb_listener_arn = string
     domain_url      = string
+    priority        = number
     authenticate    = bool
   })
   description = "Endpoint details"
