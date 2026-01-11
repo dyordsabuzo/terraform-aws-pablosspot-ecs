@@ -303,7 +303,7 @@ resource "aws_appautoscaling_policy" "down" {
 
 # CloudWatch alarm that triggers scale up policy
 resource "aws_cloudwatch_metric_alarm" "alarm" {
-  for_each            = { for alarm in var.autoscaling_metric_alarms : alarm.name => alarm }
+  for_each            = { for alarm in var.autoscaling_metric_alarms : alarm.identifier => alarm }
   alarm_name          = "${aws_ecs_service.service.name}-${each.value.identifier}"
   namespace           = "AWS/ECS"
   comparison_operator = coalesce(each.value.comparison_operator, "GreaterThanOrEqualToThreshold")
