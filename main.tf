@@ -144,11 +144,11 @@ resource "aws_cloudwatch_log_group" "log" {
 }
 
 resource "aws_lb_target_group" "target" {
-  name        = "${var.service_name}-${terraform.workspace}-tg"
-  vpc_id      = var.vpc_id
-  port        = local.main_container_port
-  protocol    = "HTTP"
-  target_type = "ip"
+  name                          = "${var.service_name}-${terraform.workspace}-tg"
+  vpc_id                        = var.vpc_id
+  port                          = local.main_container_port
+  protocol                      = "HTTP"
+  target_type                   = "ip"
   load_balancing_algorithm_type = var.load_balancing_algorithm_type
   deregistration_delay          = var.deregistration_delay
 
@@ -263,21 +263,24 @@ resource "aws_lb_listener_rule" "rule_exclusion" {
 # auto scaling
 # ECS auto scale role
 resource "aws_iam_role" "ecs_auto_scale_role" {
+  count              = var.container_capacity != null ? 1 : 0
   name               = "${aws_ecs_service.service.name}-auto-scale"
   assume_role_policy = data.aws_iam_policy_document.ecs_auto_scale_role.json
 }
 
 resource "aws_appautoscaling_target" "target" {
+  count              = var.container_capacity != null ? 1 : 0
   service_namespace  = "ecs"
   resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
-  role_arn           = aws_iam_role.ecs_auto_scale_role.arn
+  role_arn           = aws_iam_role.ecs_auto_scale_role[0].arn
   min_capacity       = var.container_capacity.min
   max_capacity       = var.container_capacity.max
 }
 
 # Automatically scale capacity up by one
 resource "aws_appautoscaling_policy" "up" {
+  count              = var.container_capacity != null ? 1 : 0
   name               = "${aws_ecs_service.service.name}-scale-up"
   service_namespace  = "ecs"
   resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
@@ -297,6 +300,7 @@ resource "aws_appautoscaling_policy" "up" {
 
 # Automatically scale capacity down by one
 resource "aws_appautoscaling_policy" "down" {
+  count              = var.container_capacity != null ? 1 : 0
   name               = "${aws_ecs_service.service.name}-scale-down"
   service_namespace  = "ecs"
   resource_id        = "service/${var.cluster.name}/${aws_ecs_service.service.name}"
@@ -325,7 +329,7 @@ resource "aws_cloudwatch_metric_alarm" "alarm" {
   period              = coalesce(each.value.period, 60)
   statistic           = coalesce(each.value.statistic, "Average")
   threshold           = coalesce(each.value.threshold, 70)
-  alarm_actions       = [each.value.metric_is_high ? aws_appautoscaling_policy.up.arn : aws_appautoscaling_policy.down.arn]
+  alarm_actions       = try([each.value.metric_is_high ? aws_appautoscaling_policy.up[0].arn : aws_appautoscaling_policy.down[0].arn], [])
 
   dimensions = {
     ClusterName = var.cluster.name

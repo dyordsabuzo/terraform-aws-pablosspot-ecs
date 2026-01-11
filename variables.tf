@@ -164,10 +164,7 @@ variable "container_capacity" {
     min = number
     max = number
   })
-  default = {
-    min = 1
-    max = 4
-  }
+  default = null
 }
 
 variable "scaling_adjustment" {
