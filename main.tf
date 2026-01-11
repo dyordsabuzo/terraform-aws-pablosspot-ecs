@@ -11,7 +11,7 @@ resource "aws_security_group" "secgrp" {
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
   security_group_id = aws_security_group.secgrp.id
-  cidr_ipv4         = data.aws_vpc.vpc.cidr_block
+  cidr_ipv4         = data.aws_vpc.vpc.cidr_ipv4
   from_port         = local.main_container_port
   to_port           = local.main_container_port
   ip_protocol       = "tcp"
@@ -20,7 +20,7 @@ resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
   security_group_id = aws_security_group.secgrp.id
-  cidr_ipv6         = data.aws_vpc.vpc.cidr_block
+  cidr_ipv6         = data.aws_vpc.vpc.cidr_ipv6
   from_port         = local.main_container_port
   to_port           = local.main_container_port
   ip_protocol       = "tcp"
