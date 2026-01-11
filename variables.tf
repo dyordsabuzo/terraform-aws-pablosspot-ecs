@@ -34,6 +34,7 @@ variable "container_healthcheck" {
     path                = string
     protocol            = string
     interval            = number
+    timeout             = number
     healthy_threshold   = number
     unhealthy_threshold = number
     matcher             = string
@@ -41,11 +42,24 @@ variable "container_healthcheck" {
   default = {
     path                = "/"
     protocol            = "HTTP"
-    interval            = 5
+    interval            = 30
+    timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 5
     matcher             = "200-299,301-399"
   }
+}
+
+variable "load_balancing_algorithm_type" {
+  description = "Target group load balancing algorithm type"
+  type        = string
+  default     = "least_outstanding_requests"
+}
+
+variable "deregistration_delay" {
+  description = "Target group deregistration delay"
+  type        = number
+  default     = 300
 }
 
 variable "vpc_id" {

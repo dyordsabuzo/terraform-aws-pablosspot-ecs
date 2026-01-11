@@ -149,17 +149,26 @@ resource "aws_lb_target_group" "target" {
   port        = local.main_container_port
   protocol    = "HTTP"
   target_type = "ip"
+  load_balancing_algorithm_type = var.load_balancing_algorithm_type
+  deregistration_delay          = var.deregistration_delay
 
   dynamic "health_check" {
     for_each = { (var.container_healthcheck.path) = var.container_healthcheck }
     content {
-      path                = health_check.value.path
-      protocol            = health_check.value.protocol
+      enabled             = true
+      port                = local.main_container_port
       interval            = health_check.value.interval
+      protocol            = health_check.value.protocol
+      path                = health_check.value.path
+      timeout             = health_check.value.timeout
       healthy_threshold   = health_check.value.healthy_threshold
       unhealthy_threshold = health_check.value.unhealthy_threshold
       matcher             = health_check.value.matcher
     }
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = local.tags
