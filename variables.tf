@@ -187,7 +187,7 @@ variable "scaling_adjustment" {
 variable "autoscaling_metric_alarms" {
   description = "Cloudwatch metric alarms associated with autoscaling"
   type = list(object({
-    identifer           = optional(string)
+    identifier          = optional(string)
     threshold           = optional(number)
     comparison_operator = optional(string)
     evaluation_periods  = optional(number)
@@ -198,28 +198,28 @@ variable "autoscaling_metric_alarms" {
     metric_is_high      = bool
   }))
   default = [{
-    identifer      = "cpu-high"
+    identifier     = "cpu-high"
     metric_name    = "CPUUtilization"
     statistic      = "Average"
     threshold      = 70
     metric_is_high = true
     },
     {
-      identifer      = "cpu-low"
+      identifier     = "cpu-low"
       metric_name    = "CPUUtilization"
       statistic      = "Average"
       threshold      = 30
       metric_is_high = false
     },
     {
-      identifer      = "memory-high"
+      identifier     = "memory-high"
       metric_name    = "MemoryUtilization"
       statistic      = "Average"
       threshold      = 70
       metric_is_high = true
     },
     {
-      identifer      = "memory-low"
+      identifier     = "memory-low"
       metric_name    = "MemoryUtilization"
       statistic      = "Average"
       threshold      = 30
