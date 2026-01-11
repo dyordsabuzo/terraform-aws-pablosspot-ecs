@@ -40,7 +40,6 @@ locals {
   main_container_port = local.first_container.container_port
 
   tags = {
-    managed_by     = "terraform"
     module_created = true
     module_name    = "terraform-aws-pablosspot-ecs"
   }
