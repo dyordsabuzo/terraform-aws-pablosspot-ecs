@@ -53,7 +53,7 @@ resource "aws_ecs_cluster" "cluster" {
   name  = var.cluster.name
 
   dynamic "setting" {
-    for_each = try(var.cluster.enable_container_insights, false) ? [1] : []
+    for_each = try(coalesce(var.cluster.enable_container_insights, false), false) ? [1] : []
     content {
       name  = "containerInsights"
       value = "enabled"
