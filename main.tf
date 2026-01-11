@@ -4,9 +4,9 @@ resource "aws_security_group" "secgrp" {
   description = "${var.service_name} ecs security group"
   vpc_id      = var.vpc_id
 
-  tags = {
+  tags = merge({
     Name = "${var.service_name}-ecs-secgrp"
-  }
+  }, local.tags)
 }
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
@@ -15,6 +15,7 @@ resource "aws_vpc_security_group_ingress_rule" "tls_ipv4" {
   from_port         = local.main_container_port
   to_port           = local.main_container_port
   ip_protocol       = "tcp"
+  tags              = local.tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
@@ -23,6 +24,7 @@ resource "aws_vpc_security_group_ingress_rule" "tls_ipv6" {
   from_port         = local.main_container_port
   to_port           = local.main_container_port
   ip_protocol       = "tcp"
+  tags              = local.tags
 }
 
 resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv4" {
@@ -30,6 +32,7 @@ resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv4" {
   security_group_id = aws_security_group.secgrp.id
   cidr_ipv4         = each.value
   ip_protocol       = "-1"
+  tags              = local.tags
 }
 
 resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
@@ -37,6 +40,7 @@ resource "aws_vpc_security_group_egress_rule" "all_traffic_ipv6" {
   security_group_id = aws_security_group.secgrp.id
   cidr_ipv6         = each.value
   ip_protocol       = "-1"
+  tags              = local.tags
 }
 
 #tfsec:ignore:aws-ecs-enable-container-insight:exp:2026-02-01
@@ -51,6 +55,8 @@ resource "aws_ecs_cluster" "cluster" {
       value = "enabled"
     }
   }
+
+  tags = local.tags
 }
 
 resource "aws_ecs_service" "service" {
@@ -76,6 +82,10 @@ resource "aws_ecs_service" "service" {
     }
   }
 
+  deployment_configuration {
+    strategy = "BLUE_GREEN"
+  }
+
   dynamic "deployment_circuit_breaker" {
     for_each = var.deployment_circuit_breaker == null ? [] : [1]
     content {
@@ -87,9 +97,13 @@ resource "aws_ecs_service" "service" {
   deployment_minimum_healthy_percent = try(var.deployment_metrics.min_percent, 100)
   deployment_maximum_percent         = try(var.deployment_metrics.max_percent, 200)
 
-  lifecycle {
-    ignore_changes = [desired_count]
-  }
+  depends_on = [aws_iam_role_policy.task_policy]
+
+  # lifecycle {
+  #   ignore_changes = [desired_count]
+  # }
+
+  tags = local.tags
 }
 
 resource "aws_ecs_task_definition" "task" {
@@ -101,11 +115,13 @@ resource "aws_ecs_task_definition" "task" {
   container_definitions    = local.container_definitions
   cpu                      = var.launch_type.cpu
   memory                   = var.launch_type.memory
+  tags                     = local.tags
 }
 
 resource "aws_iam_role" "task_role" {
   name               = "ecs-task-${var.task_family}-${terraform.workspace}"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_policy.json
+  tags               = local.tags
 }
 
 resource "aws_iam_role_policy" "task_policy" {
@@ -123,6 +139,7 @@ resource "aws_iam_role_policy_attachment" "task_execution_policy" {
 resource "aws_cloudwatch_log_group" "log" {
   name              = "/${var.cluster.name}/${var.service_name}"
   retention_in_days = var.log_retention_days
+  tags              = local.tags
 }
 
 resource "aws_lb_target_group" "target" {
@@ -143,6 +160,8 @@ resource "aws_lb_target_group" "target" {
       matcher             = health_check.value.matcher
     }
   }
+
+  tags = local.tags
 }
 
 resource "aws_lb_listener_rule" "rule" {
@@ -180,6 +199,8 @@ resource "aws_lb_listener_rule" "rule" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.target.arn
   }
+
+  tags = local.tags
 }
 
 resource "aws_lb_listener_rule" "rule_exclusion" {
@@ -225,4 +246,6 @@ resource "aws_lb_listener_rule" "rule_exclusion" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.target.arn
   }
+
+  tags = local.tags
 }
