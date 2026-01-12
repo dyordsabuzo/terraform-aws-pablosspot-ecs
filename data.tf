@@ -18,6 +18,7 @@ data "aws_iam_policy_document" "task_execution_permissions" {
       "arn:aws:ssm:*",
       "arn:aws:secretsmanager:*",
       "arn:aws:kms:*",
+      "arn:aws:s3:::*"
     ]
     actions = [
       "ecr:GetAuthorizationToken",
@@ -34,7 +35,11 @@ data "aws_iam_policy_document" "task_execution_permissions" {
       "logs:PutLogEvents",
       "ssm:GetParameters",
       "secretsmanager:GetSecretValue",
-      "kms:Decrypt"
+      "kms:Decrypt",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:ListBucket"
     ]
   }
 
