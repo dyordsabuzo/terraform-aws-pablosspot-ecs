@@ -103,16 +103,19 @@ variable "desired_count" {
   default     = 3
 }
 
-variable "egress_cidr_ipv4_list" {
-  description = "List of IPV4 CIDR blocks where egress is allowed"
-  type        = list(string)
-  default     = []
-}
-
-variable "egress_cidr_ipv6_list" {
-  description = "List of IPV6 CIDR blocks where egress is allowed"
-  type        = list(string)
-  default     = []
+variable "firewall_setting" {
+  description = "Inbound, outbound and security group attachments to the load balancer"
+  type = object({
+    inbound = optional(object({
+      cidr_ipv4 = optional(list(string))
+      cidr_ipv6 = optional(list(string))
+    }))
+    outbound = optional(object({
+      cidr_ipv4 = optional(list(string))
+      cidr_ipv6 = optional(list(string))
+    }))
+  })
+  default = null
 }
 
 variable "log_retention_days" {
